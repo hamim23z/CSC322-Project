@@ -1,3 +1,10 @@
+## Setup
+- NodeJS needs to be installed. I currently have v22.12.0
+- Also download NPM, i have v11.2.0
+- I also have MUI downloaded npm install @mui/material @emotion/react @emotion/styled and npm install @mui/icons-material
+- Everything else is pretty straightforward.
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
