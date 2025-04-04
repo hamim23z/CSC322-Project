@@ -11,6 +11,7 @@ import Features from './components/Features';
 import Testimonials from './components/Testimonials';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
+import TextEditor from './components/TextEditor';
 
 export default function HomePage(props) {
   return (
@@ -22,7 +23,7 @@ export default function HomePage(props) {
         <LogoCollection />
         <Features />
         <Divider />
-        <Testimonials />
+       <TextEditor/>
         <Divider />
         <Highlights />
         <Divider />
