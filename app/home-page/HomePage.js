@@ -20,10 +20,10 @@ export default function HomePage(props) {
       <AppAppBar />
       <Hero />
       <div>
-        <LogoCollection />
-        <Features />
-        <Divider />
-       <TextEditor/>
+       
+        <TextEditor/>
+    
+    
         <Divider />
         <Highlights />
         <Divider />
