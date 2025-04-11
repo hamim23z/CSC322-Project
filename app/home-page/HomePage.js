@@ -9,6 +9,7 @@ import Pricing from './components/Pricing';
 import Features from './components/Features';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
+import TextEditor from './components/TextEditor';
 
 export default function HomePage(props) {
   return (
@@ -17,6 +18,7 @@ export default function HomePage(props) {
       <AppAppBar />
       <Hero />
       <div>
+        <TextEditor/>
         <Features />
         <Divider />
         <Divider />
