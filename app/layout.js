@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import AppTheme from "./shared-theme/AppTheme"; // Import the AppTheme component
+import AppTheme from "./shared-theme/AppTheme";
 
 // Initialize the Inter font
 const inter = Inter({ subsets: ["latin"], display: "swap" });

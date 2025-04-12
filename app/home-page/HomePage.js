@@ -20,6 +20,8 @@ export default function HomePage(props) {
       <div>
         <TextEditor/>
         <Divider />
+        <Features />
+        <Divider />
         <Highlights />
         <Divider />
         <Pricing />
