@@ -52,39 +52,36 @@ export default function AppAppBar() {
       <Container maxWidth="lg">
         <StyledToolbar variant="dense" disableGutters>
           <Box
-            sx={{ flexGrow: 1, display: "flex", alignItems: "center", px: 0 }}
+            sx={{ flexGrow: 1, display: "flex", alignItems: "center", px: 0, }}
           >
             <Sitemark />
-            <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-              <Button variant="text" color="info" size="small">
-                Features
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Highlights
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Pricing
-              </Button>
-              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
-                FAQ
-              </Button>
-              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
-                Blog
-              </Button>
             <Box sx={{ display: { xs: "none", md: "flex" } }}>
+              <Link href="/about-us">
+                <Button variant="text" color="info" size="small">
+                  About Us
+                </Button>
+              </Link>
+
+              <Link href="https://mintlify.com/" target='_blank'>
+                <Button variant="text" color="info" size="small">
+                  Documentation
+                </Button>
+              </Link>
+
               <Link href="/pricing">
                 <Button variant="text" color="info" size="small">
                   Pricing
                 </Button>
               </Link>
-              <Link href="/documentation">
-                <Button variant="text" color="info" size="small">
-                  Documentation
-                </Button>
-              </Link>
-              <Link href="/about-us">
-                <Button variant="text" color="info" size="small">
-                  About Us
+
+              <Link href="/contact">
+                <Button
+                  variant="text"
+                  color="info"
+                  size="small"
+                  sx={{ minWidth: 0 }}
+                >
+                  Contact
                 </Button>
               </Link>
             </Box>
@@ -97,15 +94,15 @@ export default function AppAppBar() {
             }}
           >
             <Link href="/sign-in">
-            <Button color="primary" variant="text" size="small">
-              Sign in
-            </Button>
+              <Button color="primary" variant="text" size="small">
+                Sign in
+              </Button>
             </Link>
 
             <Link href="/sign-up">
-            <Button color="primary" variant="contained" size="small">
-              Sign up
-            </Button>
+              <Button color="primary" variant="contained" size="small">
+                Sign up
+              </Button>
             </Link>
           </Box>
           <Box sx={{ display: { xs: "flex", md: "none" }, gap: 1 }}>
@@ -133,6 +130,13 @@ export default function AppAppBar() {
                     <CloseRoundedIcon />
                   </IconButton>
                 </Box>
+
+                <Link
+                  href="/about-us"
+                  style={{ textDecoration: "none", color: "#fff" }}
+                >
+                  <MenuItem>About Us</MenuItem>
+                </Link>
                 <Link
                   href="/pricing"
                   style={{ textDecoration: "none", color: "#fff" }}
@@ -140,32 +144,27 @@ export default function AppAppBar() {
                   <MenuItem>Pricing</MenuItem>
                 </Link>
                 <Link
-                  href="/documentation"
+                  href="/contact"
                   style={{ textDecoration: "none", color: "#fff" }}
                 >
-                  <MenuItem>Documentation</MenuItem>
-                </Link>
-                <Link
-                  href="/about-us"
-                  style={{ textDecoration: "none", color: "#fff" }}
-                >
-                  <MenuItem>About Us</MenuItem>
+                  <MenuItem>Contact</MenuItem>
                 </Link>
                 <Divider sx={{ my: 3 }} />
+
                 <Link href="/sign-up">
-                <MenuItem>
-                  <Button color="primary" variant="contained" fullWidth>
-                    Sign up
-                  </Button>
-                </MenuItem>
+                  <MenuItem>
+                    <Button color="primary" variant="contained" fullWidth>
+                      Sign up
+                    </Button>
+                  </MenuItem>
                 </Link>
 
                 <Link href="/sign-in">
-                <MenuItem>
-                  <Button color="primary" variant="outlined" fullWidth>
-                    Sign in
-                  </Button>
-                </MenuItem>
+                  <MenuItem>
+                    <Button color="primary" variant="outlined" fullWidth>
+                      Sign in
+                    </Button>
+                  </MenuItem>
                 </Link>
               </Box>
             </Drawer>

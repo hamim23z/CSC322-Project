@@ -6,8 +6,8 @@ import AppTheme from "./shared-theme/AppTheme";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata = {
-  title: "CS322 - LLM",
-  description: "Blank for now",
+  title: "Smart Editor4U",
+  description: "A LLM used for text editing and recognition.",
 };
 
 export default function RootLayout({ children }) {
