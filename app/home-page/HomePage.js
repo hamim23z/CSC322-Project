@@ -19,8 +19,8 @@ export default function HomePage(props) {
       <Hero />
       <div>
         <TextEditor/>
-        <Features />
         <Divider />
+        <Features />
         <Divider />
         <Highlights />
         <Divider />
