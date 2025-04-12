@@ -2,15 +2,11 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import FacebookIcon from '@mui/icons-material/GitHub';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import TwitterIcon from '@mui/icons-material/X';
 import SitemarkIcon from './SitemarkIcon';
 
 function Copyright() {
@@ -18,7 +14,7 @@ function Copyright() {
     <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
       {'Copyright © '}
       <Link color="text.secondary" href="https://mui.com/">
-        Sitemark
+        Smart Editor4U
       </Link>
       &nbsp;
       {new Date().getFullYear()}
@@ -60,7 +56,7 @@ export default function Footer() {
               Join the newsletter
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-              Subscribe for weekly updates. No spams ever!
+              Subscribe for updates. No spams ever!
             </Typography>
             <InputLabel htmlFor="email-newsletter">Email</InputLabel>
             <Stack direction="row" spacing={1} useFlexGap>
@@ -101,20 +97,11 @@ export default function Footer() {
           <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
             Product
           </Typography>
-          <Link color="text.secondary" variant="body2" href="#">
-            Features
-          </Link>
-          <Link color="text.secondary" variant="body2" href="#">
-            Testimonials
-          </Link>
-          <Link color="text.secondary" variant="body2" href="#">
-            Highlights
-          </Link>
-          <Link color="text.secondary" variant="body2" href="#">
+          <Link color="text.secondary" variant="body2" href="/pricing">
             Pricing
           </Link>
-          <Link color="text.secondary" variant="body2" href="#">
-            FAQs
+          <Link color="text.secondary" variant="body2" href="https://mintlify.com/">
+            Documentation
           </Link>
         </Box>
         <Box
@@ -127,14 +114,11 @@ export default function Footer() {
           <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
             Company
           </Typography>
-          <Link color="text.secondary" variant="body2" href="#">
-            About us
+          <Link color="text.secondary" variant="body2" href="/about-us">
+            About Us
           </Link>
-          <Link color="text.secondary" variant="body2" href="#">
-            Careers
-          </Link>
-          <Link color="text.secondary" variant="body2" href="#">
-            Press
+          <Link color="text.secondary" variant="body2" href="/contact">
+            Contact
           </Link>
         </Box>
         <Box
@@ -147,14 +131,11 @@ export default function Footer() {
           <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
             Legal
           </Typography>
-          <Link color="text.secondary" variant="body2" href="#">
+          <Link color="text.secondary" variant="body2" href="/terms">
             Terms
           </Link>
-          <Link color="text.secondary" variant="body2" href="#">
+          <Link color="text.secondary" variant="body2" href="/privacy">
             Privacy
-          </Link>
-          <Link color="text.secondary" variant="body2" href="#">
-            Contact
           </Link>
         </Box>
       </Box>
@@ -169,13 +150,13 @@ export default function Footer() {
         }}
       >
         <div>
-          <Link color="text.secondary" variant="body2" href="#">
+          <Link color="text.secondary" variant="body2" href="/privacy">
             Privacy Policy
           </Link>
           <Typography sx={{ display: 'inline', mx: 0.5, opacity: 0.5 }}>
             &nbsp;•&nbsp;
           </Typography>
-          <Link color="text.secondary" variant="body2" href="#">
+          <Link color="text.secondary" variant="body2" href="/terms">
             Terms of Service
           </Link>
           <Copyright />
@@ -186,33 +167,6 @@ export default function Footer() {
           useFlexGap
           sx={{ justifyContent: 'left', color: 'text.secondary' }}
         >
-          <IconButton
-            color="inherit"
-            size="small"
-            href="https://github.com/mui"
-            aria-label="GitHub"
-            sx={{ alignSelf: 'center' }}
-          >
-            <FacebookIcon />
-          </IconButton>
-          <IconButton
-            color="inherit"
-            size="small"
-            href="https://x.com/MaterialUI"
-            aria-label="X"
-            sx={{ alignSelf: 'center' }}
-          >
-            <TwitterIcon />
-          </IconButton>
-          <IconButton
-            color="inherit"
-            size="small"
-            href="https://www.linkedin.com/company/mui/"
-            aria-label="LinkedIn"
-            sx={{ alignSelf: 'center' }}
-          >
-            <LinkedInIcon />
-          </IconButton>
         </Stack>
       </Box>
     </Container>

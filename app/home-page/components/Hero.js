@@ -86,7 +86,7 @@ export default function Hero() {
                 }),
               })}
             >
-              &nbsp;Finder4U
+              &nbsp;Editor4U
             </Typography>
           </Typography>
           <Typography
