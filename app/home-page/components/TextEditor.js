@@ -242,6 +242,9 @@ const TextEditor = () => {
         </div>
       )}
     </div>
+
+
+
   );
 };
 
