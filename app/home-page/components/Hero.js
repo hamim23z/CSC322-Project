@@ -11,6 +11,9 @@ import Typography from '@mui/material/Typography';
 import visuallyHidden from '@mui/utils/visuallyHidden';
 import { styled } from '@mui/material/styles';
 
+//This is component is the main landing page
+
+
 const StyledBox = styled('div')(({ theme }) => ({
   alignSelf: 'center',
   width: '100%',
@@ -35,6 +38,7 @@ const StyledBox = styled('div')(({ theme }) => ({
     borderColor: (theme.vars || theme).palette.grey[700],
   }),
 }));
+
 
 export default function Hero() {
   return (
@@ -86,7 +90,7 @@ export default function Hero() {
                 }),
               })}
             >
-              &nbsp;Finder4U
+              &nbsp;Editor4U
             </Typography>
           </Typography>
           <Typography
@@ -96,7 +100,7 @@ export default function Hero() {
               width: { sm: '100%', md: '80%' },
             }}
           >
-            LLM. DESCRIPTION OF PRODUCT GOES HERE
+            SmartEditor4U is an A.I. Powered Text-Editor, to aid you, with all your writing needs!
           </Typography>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
