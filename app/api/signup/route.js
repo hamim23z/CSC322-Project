@@ -8,7 +8,6 @@ export async function POST(req) {
 
     const { firstName, lastName, email, username, password, paidUser, admin, tokens } = body;
 
-
     if (!firstName || !lastName || !email || !username || !password) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
@@ -41,10 +40,20 @@ export async function POST(req) {
       email,
       username,
       password: hashedPassword,
-      paidUser: !!paidUser,         // default false if not provided
-      admin: Boolean(admin),        // default false if not provided
-      tokens: parseInt(tokens) || 20, // default to 20 tokens
+      paidUser: !!paidUser,
+      admin: Boolean(admin),
+      tokens: parseInt(tokens) || 20,
       createdAt: new Date(),
+      sharedNotes: [
+        {
+          noteId: ObjectId,
+          title: String,
+          text: String,
+          ownerId: ObjectId,
+          lastUpdated: Date
+        }
+      ],
+       // 🆕 New field added here
       stats: {
         selfCorrections: 0,
         llmCorrections: 0,
@@ -52,10 +61,8 @@ export async function POST(req) {
         tokensEarned: 0,
       },
     };
-    
 
     const result = await users.insertOne(newUser);
-
     client.close();
 
     return new Response(JSON.stringify({ success: true, userId: result.insertedId }), {

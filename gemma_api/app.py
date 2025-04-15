@@ -26,7 +26,7 @@ def generate():
     if not prompt:
         return jsonify({"error": "Missing prompt"}), 400
 
-    # ✅ Specific prompt to only fix grammar/spelling
+    #  Specific prompt to only fix grammar/spelling
     payload = {
         "contents": [
             {

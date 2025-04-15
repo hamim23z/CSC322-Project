@@ -18,6 +18,11 @@ export async function GET(req) {
     if (!user) return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
 
     const { password, ...safeUser } = user;
+
+    // 🆕 Ensure default empty arrays
+    safeUser.sharedNotes = user.sharedNotes || [];
+    safeUser.invites = user.invites || [];
+
     return new Response(JSON.stringify(safeUser), { status: 200 });
   } catch (err) {
     console.error("Token verify failed", err);
