@@ -44,15 +44,17 @@ export async function POST(req) {
       admin: Boolean(admin),
       tokens: parseInt(tokens) || 20,
       createdAt: new Date(),
-      sharedNotes: [], // Empty on signup
+      sharedNotes: [],
       stats: {
         selfCorrections: 0,
         llmCorrections: 0,
         tokensUsed: 0,
         tokensEarned: 0,
       },
+      llmRejectQueue: [], // <--- NEW: will hold rejections submitted by this user
+      whitelist: []        // optional: if user marks LLM "wrong" word as valid
     };
-
+    
     const result = await users.insertOne(newUser);
     client.close();
 

@@ -3,8 +3,9 @@ import React, { useState, useEffect } from "react";
 import {
   Button, Input, FormControl, RadioGroup,
   FormControlLabel, Radio, Dialog,
-  DialogTitle, DialogContent, DialogActions,
+  DialogTitle, DialogContent, DialogActions, TextField
 } from "@mui/material";
+
 
 const BLACKLIST = {
   stupid: "******", dumb: "****", idiot: "*****",
@@ -36,8 +37,13 @@ const TextEditor = () => {
   const [shareWithUser, setShareWithUser] = useState("");
   const [shareTitle, setShareTitle] = useState("");
   const [userId, setUserId] = useState(null);
-
-
+  const [isAdmin, setIsAdmin] = useState(false); 
+  const [buyDialogOpen, setBuyDialogOpen] = useState(false);
+  const [cardName, setCardName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [tokenAmount, setTokenAmount] = useState(0);
+  
   
 
   
@@ -55,10 +61,44 @@ const TextEditor = () => {
         setTokens(user.tokens || 0);
         setIsPaidUser(user.paidUser || false);
         setIsLoggedIn(true);
+        setIsAdmin(user.admin || false);
+        
       }
     };
     fetchUser();
   }, []);
+
+
+
+  const handleBuyTokens = async () => {
+    if (!cardName || !cardNumber || !cvv || !tokenAmount) {
+      return setMessage("❌ Please fill in all fields.");
+    }
+  
+    const newTokenTotal = tokens + parseInt(tokenAmount);
+    const token = localStorage.getItem("token");
+  
+    const res = await fetch("/api/user/updateTokens", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ tokens: newTokenTotal }),
+    });
+  
+    const data = await res.json();
+  
+    if (data.success) {
+      setTokens(newTokenTotal);
+      setBuyDialogOpen(false);
+      setCardName(""); setCardNumber(""); setCvv(""); setTokenAmount(0);
+      setMessage(`✅ Purchased ${tokenAmount} tokens for $${(tokenAmount * 0.01).toFixed(2)}`);
+    } else {
+      setMessage("❌ Failed to purchase tokens.");
+    }
+  };
+  
 
   //pulls status of shared notes
   useEffect(() => {
@@ -322,6 +362,10 @@ const TextEditor = () => {
     }
   };
 
+
+
+  
+
   const handleAcceptLLM = async () => {
     const acceptCost = 1; // Fixed cost for accepting LLM correction
     const newTokens = tokens - acceptCost;
@@ -339,10 +383,27 @@ const TextEditor = () => {
     setMessage(`✅ LLM corrections accepted. 💸 Additional charge: ${acceptCost} token`);
   };
   
-  const handleRejectLLM = () => {
+  const handleRejectLLM = async () => {
+    const reason = prompt("Why are you rejecting this correction?");
+    if (!reason) return;
+  
+    await fetch("/api/llm-reject", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        original: text,
+        corrected: llmText,
+        reason,
+      }),
+    });
+  
     setShowLLMModal(false);
-    setMessage("❌ LLM corrections rejected.");
+    setMessage("🕒 Sent to review queue. Awaiting admin decision.");
   };
+  
 
   const saveText = async () => {
     if (!isPaidUser) return setMessage("Only paid users can save.");
@@ -385,6 +446,9 @@ const TextEditor = () => {
     setStats(data);
     setShowStats(true);
   };
+
+
+
 
   return (
     <div className="p-4 bg-gray-100 rounded-lg shadow-md max-w-lg mx-auto">
@@ -490,6 +554,32 @@ const TextEditor = () => {
       </Button>
     )}
 
+      {isPaidUser && (
+        <>
+        
+          {/* ✅ ADD THIS BLOCK BELOW */}
+          {isLoggedIn && isAdmin && (
+            <Button
+            onClick={() => window.location.href = "/admin/rejects"}
+              className="w-full bg-red-600 text-white py-2 rounded mt-2"
+            >
+              🛠️ Review Reject Queue
+            </Button>
+          )}
+        </>
+      )}
+      {isPaidUser && (
+
+      <Button
+        onClick={() => setBuyDialogOpen(true)}
+        className="w-full bg-green-600 text-white py-2 rounded mt-2"
+      >
+        💰 Buy More Tokens
+      </Button>
+        )}
+
+
+
       {message && <p className="mt-2 text-red-500">{message}</p>}
 
       <Dialog open={showLLMModal} onClose={handleRejectLLM} fullWidth maxWidth="md">
@@ -524,6 +614,7 @@ const TextEditor = () => {
             </>
           )}
         </DialogContent>
+        
         <DialogActions>
           <Button onClick={handleRejectLLM}>Reject</Button>
           <Button onClick={handleAcceptLLM} variant="contained" color="primary">Accept</Button>
@@ -574,11 +665,60 @@ const TextEditor = () => {
   </DialogActions>
 </Dialog>
 
+
+<Dialog open={buyDialogOpen} onClose={() => setBuyDialogOpen(false)} fullWidth maxWidth="sm">
+  <DialogTitle>💰 Buy More Tokens</DialogTitle>
+  <DialogContent>
+    <TextField
+      label="Name on Card"
+      fullWidth
+      margin="normal"
+      value={cardName}
+      onChange={(e) => setCardName(e.target.value)}
+    />
+    <TextField
+      label="Card Number"
+      fullWidth
+      margin="normal"
+      value={cardNumber}
+      onChange={(e) => setCardNumber(e.target.value)}
+    />
+    <TextField
+      label="CVV"
+      fullWidth
+      margin="normal"
+      value={cvv}
+      onChange={(e) => setCvv(e.target.value)}
+    />
+    <TextField
+      label="Tokens to Purchase"
+      type="number"
+      fullWidth
+      margin="normal"
+      value={tokenAmount}
+      onChange={(e) => setTokenAmount(e.target.value)}
+    />
+    <p className="mt-2 text-gray-700">
+      💵 Total: <strong>${(tokenAmount * 0.01).toFixed(2)}</strong>
+    </p>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setBuyDialogOpen(false)}>Cancel</Button>
+    <Button
+  onClick={() => handleBuyTokens()}
+  variant="contained"
+  color="primary"
+>
+  Confirm Purchase
+</Button>
+
+  </DialogActions>
+</Dialog>
+
+
     </div>
 
-    
-
-    
+  
 
     
 
