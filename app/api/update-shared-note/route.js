@@ -29,22 +29,21 @@ export async function POST(req) {
     const db = client.db("SmartEditor4U");
     const users = db.collection("users");
 
-    const updateResult = await users.updateOne(
+    const updateResult = await users.updateMany(
       {
-        "sharedNotes.noteId": noteId,
-        $or: [
-          { _id: new ObjectId(userId) },
-          { "sharedNotes.collaborators": userId }
-        ]
+        "sharedNotes.noteId": noteId
       },
       {
         $set: {
-          "sharedNotes.$.text": text,
-          "sharedNotes.$.updatedAt": new Date()
+          "sharedNotes.$[elem].text": text,
+          "sharedNotes.$[elem].updatedAt": new Date()
         }
+      },
+      {
+        arrayFilters: [{ "elem.noteId": noteId }]
       }
     );
-
+    
     if (updateResult.modifiedCount === 0) {
       return new Response(JSON.stringify({ error: "Note not updated" }), { status: 404 });
     }

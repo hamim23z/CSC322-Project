@@ -1,5 +1,5 @@
 // app/api/signup/route.js
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
 
 export async function POST(req) {
@@ -44,16 +44,7 @@ export async function POST(req) {
       admin: Boolean(admin),
       tokens: parseInt(tokens) || 20,
       createdAt: new Date(),
-      sharedNotes: [
-        {
-          noteId: ObjectId,
-          title: String,
-          text: String,
-          ownerId: ObjectId,
-          lastUpdated: Date
-        }
-      ],
-       // 🆕 New field added here
+      sharedNotes: [], // Empty on signup
       stats: {
         selfCorrections: 0,
         llmCorrections: 0,
