@@ -43,10 +43,49 @@ const TextEditor = () => {
   const [cardNumber, setCardNumber] = useState("");
   const [cvv, setCvv] = useState("");
   const [tokenAmount, setTokenAmount] = useState(0);
-  
-  
+  const [selfCorrectionDiff, setSelfCorrectionDiff] = useState(null);
+  const [blacklistDialogOpen, setBlacklistDialogOpen] = useState(false);
+  const [submittedBlacklist, setSubmittedBlacklist] = useState("");
+  const [reviewBlacklistOpen, setReviewBlacklistOpen] = useState(false);
+  const [pendingBlacklist, setPendingBlacklist] = useState([]);
 
-  
+    
+
+    useEffect(() => {
+  const fetchBlacklist = async () => {
+    try {
+      const res = await fetch("/api/blacklist/all", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Blacklist fetch error:", err.error || "Unknown error");
+        return;
+      }
+
+      const dbWords = await res.json();
+
+      if (!Array.isArray(dbWords)) {
+        console.error("Expected an array but got:", dbWords);
+        return;
+      }
+
+      dbWords.forEach((word) => {
+        if (!BLACKLIST[word]) {
+          BLACKLIST[word] = "*".repeat(word.length);
+        }
+      });
+    } catch (error) {
+      console.error("Failed to fetch blacklist:", error);
+    }
+  };
+
+  fetchBlacklist();
+}, []);
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -293,7 +332,7 @@ const TextEditor = () => {
     setBlacklistCost(blCost);
     if (correctionType === "llm") {
       try {
-        const res = await fetch("http://localhost:5001/generate", {
+        const res = await fetch("https://gemini-api-322-addz.onrender.com/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt: cleanedText }),
@@ -309,26 +348,40 @@ const TextEditor = () => {
         setShowLLMModal(true);
     
         localStorage.setItem("lastSubmission", cleanedText);
-    
+
         if (isPaidUser) {
-          const bonus = changes === 0 ? 3 : 0;
-          const submissionCost = wordCount;
-          const totalInitialCost = submissionCost + blCost;
+      const bonus = changes === 0 ? 3 : 0;
+      const submissionCost = wordCount;
+      const totalCostNow = submissionCost + blCost;
+
+      let actualDeducted;
+      let finalTokens;
+
+      if (tokens >= totalCostNow) {
+        actualDeducted = totalCostNow;
+        finalTokens = tokens - totalCostNow + bonus;
+        setMessage(`✅ Submission accepted. ${bonus > 0 ? `🎁 +${bonus} bonus tokens.` : ""}`);
+      } else {
+        // Not enough tokens: fallback to 50% penalty
+        actualDeducted = Math.floor(tokens / 2);
+        finalTokens = tokens - actualDeducted;
+        setMessage(`⚠️ Not enough tokens. Half your tokens were deducted.`);
+      }
+
+      setTokens(finalTokens);
+      await updateTokensInDB(finalTokens);
+      await updateStatsInDB({
+        tokensEarned: bonus,
+        tokensUsed: actualDeducted,
+      });
+
+      if (bonus > 0) setBonusAwarded(true);
+
+}
+
+
+
     
-          if (bonus > 0) {
-            setBonusAwarded(true);
-            setTokens(tokens + bonus - totalInitialCost); // tokens +3 - cost
-            await updateTokensInDB(tokens + bonus - totalInitialCost);
-            await updateStatsInDB({
-              tokensEarned: bonus,
-              tokensUsed: totalInitialCost,
-            });
-          } else {
-            setTokens(tokens - totalInitialCost);
-            await updateTokensInDB(tokens - totalInitialCost);
-            await updateStatsInDB({ tokensUsed: totalInitialCost });
-          }
-        }
     
       } catch (err) {
         console.error(err);
@@ -340,17 +393,46 @@ const TextEditor = () => {
      else {
       const prev = localStorage.getItem("lastSubmission") || "";
       const changes = calculateChanges(prev, cleanedText);
-      const cost = isFreeUser ? 0 : Math.floor(changes / 2) + blCost;
-      const newTokens = tokens - cost;
+      let cost = isFreeUser ? 0 : Math.floor(changes / 2) + blCost;
+      let newTokens = tokens;
 
-      setText(cleanedText);
-      setTokens(newTokens);
-      setMessage(
-        `✅ Self-corrected.` +
-        (isFreeUser ? " (Free user - no charges)" : ` 💸 Charged: ${cost} token${cost !== 1 ? "s" : ""}`) +
-        (blCost > 0 ? ` 🚫 Blacklist penalty: ${blCost}` : "") +
-        (changes ? ` ✏️ ${changes} word${changes !== 1 ? "s" : ""} changed.` : "")
-      );
+      if (isPaidUser) {
+        let actualCost;
+
+        if (tokens >= cost) {
+          actualCost = cost;
+          setMessage(`✅ Self-corrected. 💸 Charged ${cost} tokens.`);
+        } else {
+          actualCost = Math.floor(tokens / 2);
+          setMessage(`⚠️ Not enough tokens. Deducted ${actualCost} (half of your tokens).`);
+        }
+
+        const newBalance = tokens - actualCost;
+        setTokens(newBalance); // ✅ real-time update
+        await updateTokensInDB(newBalance);
+        await updateStatsInDB({
+          selfCorrections: 1,
+          tokensUsed: actualCost,
+        });
+      }
+
+      newTokens = tokens - cost;
+
+
+      if (newTokens < 0) {
+        // Not enough tokens — fallback
+        newTokens = Math.floor(tokens / 2);
+        cost = tokens - newTokens;
+        setMessage("⚠️ Not enough tokens. Deducted half your tokens instead.");
+      } else {
+        setMessage(
+          `✅ Self-corrected.` +
+          (isFreeUser ? " (Free user - no charges)" : ` 💸 Charged: ${cost} token${cost !== 1 ? "s" : ""}`) +
+          (blCost > 0 ? ` 🚫 Blacklist penalty: ${blCost}` : "") +
+          (changes ? ` ✏️ ${changes} word${changes !== 1 ? "s" : ""} changed.` : "")
+        );
+      }
+
       
 
       if (isPaidUser) {
@@ -359,6 +441,13 @@ const TextEditor = () => {
       }
 
       localStorage.setItem("lastSubmission", cleanedText);
+      if (changes > 0) {
+  setSelfCorrectionDiff({
+    before: prev,
+    after: cleanedText,
+  });
+}
+
     }
   };
 
@@ -367,21 +456,30 @@ const TextEditor = () => {
   
 
   const handleAcceptLLM = async () => {
-    const acceptCost = 1; // Fixed cost for accepting LLM correction
-    const newTokens = tokens - acceptCost;
-  
-    setText(llmText === "No changes needed." ? text : llmText);
-    setShowLLMModal(false);
-    localStorage.setItem("lastSubmission", llmText === "No changes needed." ? text : llmText);
-  
-    if (isPaidUser) {
-      setTokens(newTokens);
-      await updateTokensInDB(newTokens);
-      await updateStatsInDB({ llmCorrections: 1, tokensUsed: acceptCost });
-    }
-  
-    setMessage(`✅ LLM corrections accepted. 💸 Additional charge: ${acceptCost} token`);
-  };
+  const acceptedText = llmText === "No changes needed." ? text : llmText;
+  setText(acceptedText);
+  setShowLLMModal(false);
+  localStorage.setItem("lastSubmission", acceptedText);
+
+  if (isPaidUser) {
+  let newTokens = tokens - 1;
+  if (newTokens < 0) {
+    newTokens = Math.floor(tokens / 2);
+    setMessage("⚠️ Not enough tokens. Deducted half instead.");
+  } else {
+    setMessage("✅ LLM corrections accepted. 💸 Charged 1 token.");
+  }
+
+  setTokens(newTokens);
+  await updateTokensInDB(newTokens);
+  await updateStatsInDB({ llmCorrections: 1, tokensUsed: tokens - newTokens });
+}
+
+
+  setMessage("✅ LLM corrections accepted. 💸 Charged 1 token.");
+};
+
+
   
   const handleRejectLLM = async () => {
     const reason = prompt("Why are you rejecting this correction?");
@@ -516,6 +614,18 @@ const TextEditor = () => {
         className="w-full p-2 border rounded mb-2"
       />
 
+      {selfCorrectionDiff && (
+  <div className="bg-blue-100 text-black p-3 rounded mt-3">
+    <p><strong>🔄 Self-Correction Diff:</strong></p>
+    <p><strong>Before Change:</strong></p>
+    <pre className="whitespace-pre-wrap">{selfCorrectionDiff.before}</pre>
+    <p><strong>Self-Corrected:</strong></p>
+    <pre className="whitespace-pre-wrap">{selfCorrectionDiff.after}</pre>
+  </div>
+)}
+
+
+
       <FormControl className="mb-2">
         <RadioGroup value={correctionType} onChange={handleCorrectionTypeChange} row>
           <FormControlLabel value="self" control={<Radio />} label="Self Correction" />
@@ -531,6 +641,8 @@ const TextEditor = () => {
           <Button onClick={fetchStats} className="w-full bg-gray-700 text-white py-2 rounded mt-2">📊 View Stats</Button>
         </>
       )}
+
+      
       
       {activeSharedNote && isPaidUser && (
       <Button
@@ -565,22 +677,137 @@ const TextEditor = () => {
             >
               🛠️ Review Reject Queue
             </Button>
-          )}
-        </>
-      )}
-      {isPaidUser && (
 
-      <Button
-        onClick={() => setBuyDialogOpen(true)}
-        className="w-full bg-green-600 text-white py-2 rounded mt-2"
-      >
-        💰 Buy More Tokens
-      </Button>
-        )}
+            
+          )}
+          
+          
+        </>
+        
+      )}
+
+
+      {isPaidUser && (
+  <>
+    <Button
+      onClick={() => setBuyDialogOpen(true)}
+      className="w-full bg-green-600 text-white py-2 rounded mt-2"
+    >
+      💰 Buy More Tokens
+    </Button>
+
+    <Button
+      onClick={() => setBlacklistDialogOpen(true)} // ✅ this controls the dialog
+      className="w-full bg-red-500 text-white py-2 rounded mt-2"
+    >
+      🚫 Submit Blacklist Words
+    </Button>
+  </>
+)}
+
+
+
+
+
+     {isAdmin && (
+  <Button
+    onClick={async () => {
+      
+      try {
+        const res = await fetch("/api/blacklist/queue", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            
+          },
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          console.error("❌ Blacklist fetch failed:", error.error || res.statusText);
+          setMessage("❌ Could not load pending blacklist.");
+          return;
+        }
+
+        const data = await res.json();
+        if (!Array.isArray(data)) {
+          console.error("❌ Expected array, got:", data);
+          setMessage("❌ Unexpected server response.");
+          return;
+        }
+
+        setPendingBlacklist(data);
+        setReviewBlacklistOpen(true);
+      } catch (err) {
+        console.error("❌ Fetch error:", err);
+        setMessage("❌ Failed to fetch blacklist queue.");
+      }
+    }}
+    className="w-full bg-red-600 text-white py-2 rounded mt-2"
+  >
+    🛠️ Manage Blacklist
+  </Button>
+)}
 
 
 
       {message && <p className="mt-2 text-red-500">{message}</p>}
+
+      <Dialog open={reviewBlacklistOpen} onClose={() => setReviewBlacklistOpen(false)}>
+  <DialogTitle>🛠️ Review Blacklist Submissions</DialogTitle>
+  <DialogContent>
+    {pendingBlacklist.length === 0 ? (
+      <p>No pending words</p>
+    ) : (
+      pendingBlacklist.map((entry) => (
+        <div key={entry.word} className="flex justify-between items-center my-2">
+          <span>{entry.word}</span>
+          <div>
+            <Button
+              onClick={async () => {
+                await fetch("/api/blacklist/approve", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("token")}` // ✅ Add this
+                },
+                body: JSON.stringify({ words: [entry.word] }), // ✅ simple array
+              });
+
+                setPendingBlacklist(pendingBlacklist.filter(w => w.word !== entry.word));
+              }}
+              size="small" color="success" variant="contained"
+            >
+              Approve
+            </Button>
+            <Button
+              onClick={async () => {
+       
+                 await fetch("/api/blacklist/reject", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("token")}` // ✅ Add this
+                },
+                body: JSON.stringify({ words: [entry.word] }), // ✅ simple array
+              });
+
+                setPendingBlacklist(pendingBlacklist.filter(w => w.word !== entry.word));
+              }}
+              size="small" color="error" variant="outlined"
+              style={{ marginLeft: "8px" }}
+            >
+              Reject
+            </Button>
+          </div>
+        </div>
+      ))
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setReviewBlacklistOpen(false)}>Close</Button>
+  </DialogActions>
+</Dialog>
+
 
       <Dialog open={showLLMModal} onClose={handleRejectLLM} fullWidth maxWidth="md">
         <DialogTitle>LLM Suggested Edits</DialogTitle>
@@ -664,8 +891,6 @@ const TextEditor = () => {
     </Button>
   </DialogActions>
 </Dialog>
-
-
 <Dialog open={buyDialogOpen} onClose={() => setBuyDialogOpen(false)} fullWidth maxWidth="sm">
   <DialogTitle>💰 Buy More Tokens</DialogTitle>
   <DialogContent>
@@ -701,19 +926,57 @@ const TextEditor = () => {
     <p className="mt-2 text-gray-700">
       💵 Total: <strong>${(tokenAmount * 0.01).toFixed(2)}</strong>
     </p>
+
+   
   </DialogContent>
+
   <DialogActions>
     <Button onClick={() => setBuyDialogOpen(false)}>Cancel</Button>
     <Button
-  onClick={() => handleBuyTokens()}
-  variant="contained"
-  color="primary"
->
-  Confirm Purchase
-</Button>
-
+      onClick={() => handleBuyTokens()}
+      variant="contained"
+      color="primary"
+    >
+      Confirm Purchase
+    </Button>
   </DialogActions>
 </Dialog>
+
+<Dialog open={blacklistDialogOpen} onClose={() => setBlacklistDialogOpen(false)}>
+  <DialogTitle>🚫 Submit Blacklist Words</DialogTitle>
+  <DialogContent>
+    <TextField
+      label="Enter words (comma-separated)"
+      fullWidth
+      value={submittedBlacklist}
+      onChange={(e) => setSubmittedBlacklist(e.target.value)}
+    />
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setBlacklistDialogOpen(false)}>Cancel</Button>
+    <Button
+      onClick={async () => {
+       await fetch("/api/blacklist/submit", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}` // ✅ Add this
+          },
+          body: JSON.stringify({ words: submittedBlacklist }),
+        });
+
+        setSubmittedBlacklist('');
+        setBlacklistDialogOpen(false);
+        setMessage("✅ Submitted for review.");
+      }}
+      variant="contained"
+      color="primary"
+    >
+      Submit
+    </Button>
+  </DialogActions>
+</Dialog>
+
 
 
     </div>
